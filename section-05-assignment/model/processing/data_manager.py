@@ -1,12 +1,56 @@
+import re
 import typing as t
 from pathlib import Path
 
 import joblib
+import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
 
-from regression_model import __version__ as _version
-from regression_model.config.core import DATASET_DIR, TRAINED_MODEL_DIR, config
+from model import __version__ as _version
+from model.config.core import DATASET_DIR, TRAINED_MODEL_DIR, config
+
+
+def get_title(passenger):
+    line = passenger
+    if re.search('Mrs', line):
+        return 'Mrs'
+    elif re.search('Mr', line):
+        return 'Mr'
+    elif re.search('Miss', line):
+        return 'Miss'
+    elif re.search('Master', line):
+        return 'Master'
+    else:
+        return 'Other'
+    
+    
+def get_first_cabin(row):
+    try:
+        return row.split()[0]
+    except:
+        return np.nan
+    
+    
+def data_prep(*, data: pd.DataFrame) -> pd.DataFrame:
+    # replace question marks by NaN values
+    data = data.replace('?', np.nan)
+    
+    # retain only the first cabin if more than
+    # 1 are available per passenger
+    data['cabin'] = data['cabin'].apply(get_first_cabin)
+    
+    # extracts the title (Mr, Ms, etc) from the name variable
+    data['title'] = data['name'].apply(get_title)
+    
+    # cast numerical variables as floats
+    data['fare'] = data['fare'].astype('float')
+    data['age'] = data['age'].astype('float')
+    
+    # drop unnecessary variables
+    data.drop(labels=config.model_config.unused_vars, axis=1, inplace=True)
+    
+    return data
 
 
 def load_dataset(*, file_name: str) -> pd.DataFrame:
