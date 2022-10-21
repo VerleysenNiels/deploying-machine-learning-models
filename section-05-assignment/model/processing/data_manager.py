@@ -61,6 +61,10 @@ def load_dataset(*, file_name: str) -> pd.DataFrame:
     transformed = dataframe.rename(columns=config.model_config.variables_to_rename)
     return transformed
 
+def _load_raw_dataset(*, file_name: str) -> pd.DataFrame:
+    dataframe = pd.read_csv(Path(f"{DATASET_DIR}/{file_name}"))
+    return dataframe
+
 
 def save_pipeline(*, pipeline_to_persist: Pipeline) -> None:
     """Persist the pipeline.
